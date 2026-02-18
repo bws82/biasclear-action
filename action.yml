@@ -52,7 +52,7 @@ runs:
 
     - name: Install BiasClear
       shell: bash
-      run: pip install biasclear
+      run: python -c "import biasclear" 2>/dev/null || pip install biasclear
 
     - name: Run BiasClear Scan
       id: scan
