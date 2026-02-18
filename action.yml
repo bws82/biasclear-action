@@ -1,0 +1,65 @@
+name: 'BiasClear Scan'
+description: 'Scan files for structural bias using BiasClear. Fails if truth score drops below threshold.'
+author: 'Brad Slimp'
+
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  paths:
+    description: 'Glob pattern for files to scan (e.g. "docs/**/*.md")'
+    required: true
+    default: '**/*.md'
+  threshold:
+    description: 'Minimum truth score (0-100). Fails if any file scores below this.'
+    required: false
+    default: '70'
+  domain:
+    description: 'Analysis domain: general | legal | media | financial'
+    required: false
+    default: 'general'
+  fail-on-bias:
+    description: 'Whether to fail the workflow if bias is detected (true/false)'
+    required: false
+    default: 'true'
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+
+outputs:
+  total-files:
+    description: 'Total number of files scanned'
+    value: ${{ steps.scan.outputs.total_files }}
+  flagged-files:
+    description: 'Number of files with bias detected'
+    value: ${{ steps.scan.outputs.flagged_files }}
+  avg-score:
+    description: 'Average truth alignment score'
+    value: ${{ steps.scan.outputs.avg_score }}
+  report:
+    description: 'Full scan report (JSON)'
+    value: ${{ steps.scan.outputs.report }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install BiasClear
+      shell: bash
+      run: pip install biasclear
+
+    - name: Run BiasClear Scan
+      id: scan
+      shell: bash
+      env:
+        SCAN_PATHS: ${{ inputs.paths }}
+        SCAN_THRESHOLD: ${{ inputs.threshold }}
+        SCAN_DOMAIN: ${{ inputs.domain }}
+        SCAN_FAIL_ON_BIAS: ${{ inputs.fail-on-bias }}
+      run: python ${{ github.action_path }}/scan.py
